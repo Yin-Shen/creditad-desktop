@@ -1,0 +1,49 @@
+{
+  "name": "creditad-desktop",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "CHOKIDAR_USEPOLLING=1 vite --config vite.config.dev.ts --host 0.0.0.0 --port 5173",
+    "type-check": "vue-tsc --noEmit",
+    "package:preflight": "node scripts/package-preflight.cjs",
+    "package:stage": "bash ../scripts/stage_windows_package.sh",
+    "package:runtime": "bash ../scripts/build_win_runtime.sh",
+    "test": "npm run test:unit",
+    "test:unit": "node --test tests/reviewExport.test.mjs",
+    "test:e2e": "node tests/e2e/run.mjs",
+    "build": "npm run build:desktop",
+    "build:desktop": "npm run package:preflight && vite build && electron-builder --config electron-builder.config.cjs",
+    "build:win": "npm run package:preflight && vite build && electron-builder --config electron-builder.config.cjs --win nsis",
+    "build:win:portable": "npm run package:preflight && vite build && electron-builder --config electron-builder.config.cjs --win portable",
+    "build:win:all": "npm run package:preflight && vite build && electron-builder --config electron-builder.config.cjs --win nsis portable",
+    "release": "npm run build:win",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@fontsource/ibm-plex-mono": "^5.3.0",
+    "@fontsource/ibm-plex-sans": "^5.3.0",
+    "@fontsource/ibm-plex-sans-condensed": "^5.3.0",
+    "@fontsource/source-code-pro": "^5.3.0",
+    "@fontsource/source-sans-3": "^5.3.0",
+    "@fontsource/source-serif-4": "^5.3.0",
+    "@fortawesome/fontawesome-free": "^7.2.0",
+    "axios": "^1.13.6",
+    "electron-updater": "^6.8.3",
+    "pinia": "^3.0.4",
+    "tree-kill": "^1.2.2",
+    "vue": "^3.4.21"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.0.4",
+    "electron": "^30.0.1",
+    "electron-builder": "^24.13.3",
+    "resedit": "^2.0.3",
+    "typescript": "^5.2.2",
+    "vite": "^5.1.6",
+    "vite-plugin-electron": "^0.28.6",
+    "vite-plugin-electron-renderer": "^0.14.5",
+    "vue-tsc": "^2.0.26"
+  },
+  "main": "dist-electron/main.js"
+}

@@ -1,0 +1,551 @@
+/* ─────────────────────────────────────────────────────────────────────────────
+   CrediTAD design system.
+
+   Direction: the interface has no colour of its own. Every hue on screen belongs
+   to data — the D5→D1 tier ramp (blue→grey, see constants/tierColors.js), the
+   per-method track hues, and the graded evidence words. Chrome is paper and ink,
+   so a coloured mark always means something. Personality comes from the type
+   (IBM Plex Condensed / Sans / Mono), hairline rules and a tick motif borrowed
+   from the coordinate axis this whole tool is about.
+
+   Typefaces are bundled locally (latin subsets, imported in main.ts). No webfont
+   CDN: an @import from fonts.googleapis.com is render-blocking, fails on networks
+   where Google is unreachable, and must keep working in the offline desktop build.
+   ───────────────────────────────────────────────────────────────────────────── */
+
+:root {
+    /* ── Type ─────────────────────────────────────────────────────────────────
+       Source Serif 4 / Source Sans 3 / Source Code Pro: one superfamily, drawn
+       for scholarly publishing and screen reading. Titles are set in the serif,
+       the way a paper's title is; the interface itself stays in the sans so the
+       serif keeps its authority; every coordinate, count, accession and grade is
+       in the monospace with tabular figures. */
+    --font-display: 'Source Serif 4', 'Source Serif Pro', Georgia, 'Times New Roman', serif;
+    --font-sans: 'Source Sans 3', 'Source Sans Pro', -apple-system, BlinkMacSystemFont,
+                 'Segoe UI', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', Arial, sans-serif;
+    --font-mono: 'Source Code Pro', ui-monospace, SFMono-Regular, Menlo, Consolas,
+                 'DejaVu Sans Mono', 'Liberation Mono', monospace;
+
+    --fs-micro: 11px;
+    --fs-xs: 12px;
+    --fs-sm: 13px;
+    --fs-base: 15px;
+    --fs-md: 16px;
+    --fs-lg: 19px;
+    --fs-xl: 24px;
+    --fs-2xl: 32px;
+    --fs-3xl: 42px;
+
+    --lh-tight: 1.14;
+    --lh-snug: 1.32;
+    --lh-body: 1.58;
+    --track-caps: 0.09em;
+
+    /* ── Space / shape ────────────────────────────────────────────────────── */
+    --s1: 4px;  --s2: 8px;  --s3: 12px; --s4: 16px;
+    --s5: 24px; --s6: 32px; --s7: 48px; --s8: 64px;
+
+    /* Print-plate geometry: nearly square corners and rules instead of shadows. */
+    --r-xs: 2px; --r-sm: 3px; --r-md: 4px; --r-lg: 6px;
+
+    --ease: cubic-bezier(0.32, 0.08, 0.24, 1);
+    --dur: 0.13s;
+
+    /* ── Surfaces and ink (warm neutral, deliberately not blue-grey: it makes
+          the blue tier ramp read as data rather than as chrome) ───────────── */
+    --paper: #FAFAF8;
+    --surface: #FFFFFF;
+    --surface-2: #F3F3F1;
+    --surface-3: #E7E7E3;
+    --rule: #E3E2DD;
+    --rule-strong: #CCCBC4;
+
+    --ink: #16181F;
+    --ink-2: #53565F;
+    --ink-3: #696C75;   /* 5.2:1 on white — the floor for body-sized text */
+    --ink-faint: #9A9CA1; /* non-text marks only */
+
+    --on-ink: #FFFFFF;
+
+    /* Brand accent: a deep plate blue, the same family as the D5 end of the tier
+       ramp. The interface borrows its identity from the scale it exists to show,
+       and keeps the value dark enough to read as ink rather than as a UI accent. */
+    --brand: #1D3F8F;
+    --brand-strong: #142C66;
+    --brand-tint: #EDF1FA;
+    --brand-tint-2: #D8E1F3;
+    /* Warm secondary, for optional / bundled / needs-a-look marks. Used sparingly
+       so it stays a signal rather than decoration. */
+    --amber: #9A5410;
+    --amber-tint: #FAF3E9;
+
+    /* Legacy token names kept so every component keeps resolving; re-valued. */
+    --bg-main: var(--paper);
+    --bg-card: var(--surface);
+    --bg-secondary: var(--surface-2);
+    --bg-tertiary: var(--surface-3);
+    --border: var(--rule);
+    --border-hover: var(--rule-strong);
+    --text-primary: var(--ink);
+    --text-secondary: var(--ink-2);
+    --text-muted: var(--ink-3);
+
+    /* Interactive = brand. Data keeps its own hues; the chrome uses exactly one
+       accent plus the warm secondary, never a colour per destination. */
+    --primary: #1D3F8F;
+    --primary-hover: #142C66;
+    --primary-rgb: 29, 63, 143;
+    --accent: #1D3F8F;
+    --accent-hover: #142C66;
+
+    /* ── Data semantics ───────────────────────────────────────────────────────
+       One muted family at matched lightness so the four evidence grades read as
+       a scale, not as traffic lights. Fills are for marks; *-text clears WCAG AA
+       (4.5:1) on --surface, --paper and --surface-2 in both themes. */
+    --success: #2F7D57;
+    --warning: #B8791F;
+    --danger:  #B4443C;
+
+    --primary-text: #1D3F8F;   /* 9.1:1 on white */
+    --accent-text:  #1F6B46;
+    --success-text: #1F6B46;
+    --warning-text: #8A5A12;
+    --caution-text: #9A4E14;
+    --danger-text:  #A03A32;
+    --info-text:    #1D4ED8;   /* same family as the D5 tier blue */
+    --purple-text:  #5B4BB8;
+
+    /* Rules do the work of shadows here; only the modal is allowed to lift. */
+    --shadow-sm: none;
+    --shadow-md: 0 1px 2px rgba(22, 24, 31, 0.04);
+    --shadow-lg: 0 2px 4px rgba(22, 24, 31, 0.06), 0 24px 48px -26px rgba(22, 24, 31, 0.3);
+}
+
+.dark {
+    --paper: #101218;
+    --surface: #181A21;
+    --surface-2: #21242C;
+    --surface-3: #2C3039;
+    --rule: #2A2D35;
+    --rule-strong: #3C4049;
+
+    --ink: #F1F1EF;
+    --ink-2: #BABCC2;
+    --ink-3: #A1A4AC;   /* 6.0:1 on --surface */
+    --ink-faint: #6C6F77;
+
+    --on-ink: #FFFFFF;
+
+    --brand: #7E9BE8;
+    --brand-strong: #9DB4EF;
+    --brand-tint: #1A2136;
+    --brand-tint-2: #232C46;
+    --amber: #D6A055;
+    --amber-tint: #2A2317;
+
+    --primary: #3C5FBF;
+    --primary-hover: #4E72D4;
+    --primary-rgb: 126, 155, 232;
+    --accent: #3C5FBF;
+    --accent-hover: #4E72D4;
+
+    --primary-text: #A8BEF0;
+
+    --shadow-sm: none;
+    --shadow-md: 0 1px 2px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 2px 4px rgba(0, 0, 0, 0.4), 0 24px 48px -26px rgba(0, 0, 0, 0.8);
+    --accent-text:  #6FBF95;
+    --success-text: #6FBF95;
+    --warning-text: #E0A94E;
+    --caution-text: #E8A06B;
+    --danger-text:  #E88A82;
+    --info-text:    #A5CFFE;
+    --purple-text:  #B9AEF5;
+}
+
+/* ── Base ─────────────────────────────────────────────────────────────────── */
+
+* {
+    font-family: var(--font-sans);
+    box-sizing: border-box;
+}
+
+code, pre, kbd, samp,
+.font-mono, .tabular, .mono-num {
+    font-family: var(--font-mono);
+}
+
+body {
+    background: var(--bg-main);
+    color: var(--text-primary);
+    margin: 0;
+    font-size: var(--fs-base);
+    line-height: var(--lh-body);
+    transition: background 0.2s, color 0.2s;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    line-height: var(--lh-tight);
+    letter-spacing: -0.006em;   /* the serif sets loose at display sizes */
+    color: var(--text-primary);
+    margin: 0;
+}
+
+/* Data-dense readout: numbers align in columns and never reflow between values. */
+.tabular, .mono-num {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum' 1;
+}
+
+/* Keyboard users must always see where focus is. */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+    border-radius: var(--r-xs);
+}
+
+/* Honour the OS "reduce motion" setting. */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+/* ── Page furniture ───────────────────────────────────────────────────────── */
+
+/* One measure for running prose. Long lines were the single biggest readability
+   problem in the previous layout (110+ characters on Data Manager). */
+.measure { max-width: 68ch; }
+.measure-narrow { max-width: 54ch; }
+
+.eyebrow {
+    font-family: var(--font-mono);
+    font-size: var(--fs-micro);
+    font-weight: 500;
+    letter-spacing: var(--track-caps);
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+
+/* Section heading sitting on a hairline, marked by a tick — the same gesture as
+   a boundary tick on the coordinate axis. */
+.section-head {
+    display: flex;
+    align-items: baseline;
+    gap: var(--s3);
+    padding-bottom: var(--s2);
+    border-bottom: 1px solid var(--rule);
+    margin-bottom: var(--s4);
+}
+.section-head::before {
+    content: '';
+    flex: none;
+    width: 2px;
+    height: 13px;
+    background: var(--brand);
+    transform: translateY(2px);
+}
+.section-head h2,
+.section-head h3,
+.section-head .section-title {
+    font-family: var(--font-display);
+    font-size: var(--fs-lg);
+    font-weight: 600;
+    letter-spacing: -0.004em;
+    color: var(--text-primary);
+    margin: 0;
+}
+.section-head .section-note {
+    margin-left: auto;
+    font-size: var(--fs-xs);
+    color: var(--text-muted);
+}
+
+.hint {
+    font-size: var(--fs-sm);
+    line-height: 1.5;
+    color: var(--text-muted);
+}
+
+/* ── Surfaces ─────────────────────────────────────────────────────────────── */
+
+.card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    box-shadow: var(--shadow-sm);
+}
+
+/* ── Controls ─────────────────────────────────────────────────────────────── */
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    height: 32px;
+    padding: 0 13px;
+    border-radius: var(--r-sm);
+    font-family: var(--font-sans);
+    font-size: var(--fs-sm);
+    font-weight: 500;
+    letter-spacing: 0.005em;
+    line-height: 1;
+    white-space: nowrap;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease),
+                color var(--dur) var(--ease);
+}
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.btn-primary,
+.btn-accent {
+    background: var(--primary);
+    color: var(--on-ink);
+    border-color: var(--primary);
+}
+.btn-primary:hover:not(:disabled),
+.btn-accent:hover:not(:disabled) { background: var(--primary-hover); border-color: var(--primary-hover); }
+
+.btn-outline {
+    background: var(--bg-card);
+    border-color: var(--border-hover);
+    color: var(--text-primary);
+}
+.btn-outline:hover:not(:disabled) { border-color: var(--primary); background: var(--bg-secondary); }
+
+.btn-ghost {
+    background: transparent;
+    color: var(--text-secondary);
+}
+.btn-ghost:hover:not(:disabled) { background: var(--bg-secondary); color: var(--text-primary); }
+
+.btn-sm { height: 26px; padding: 0 9px; font-size: var(--fs-xs); }
+.btn-lg { height: 38px; padding: 0 18px; font-size: var(--fs-base); }
+
+.input,
+.field-input {
+    background: var(--bg-card);
+    border: 1px solid var(--border-hover);
+    border-radius: var(--r-sm);
+    padding: 7px 10px;
+    font-size: var(--fs-sm);
+    line-height: 1.4;
+    color: var(--text-primary);
+    outline: none;
+    transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+.input::placeholder,
+.field-input::placeholder { color: var(--ink-faint); }
+.input:focus,
+.field-input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.09);
+}
+
+/* Paths, coordinates and accessions are data — set them in the data face. */
+input.path-input,
+textarea.path-input,
+.field-input[type='text'] {
+    font-family: var(--font-mono);
+    font-size: var(--fs-sm);
+}
+
+/* ── Marks ────────────────────────────────────────────────────────────────── */
+
+.badge {
+    display: inline-flex;
+    align-items: center;
+    height: 19px;
+    padding: 0 7px;
+    border-radius: var(--r-xs);
+    background: var(--bg-secondary);
+    border: 1px solid var(--rule);
+    font-family: var(--font-mono);
+    font-size: var(--fs-micro);
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+}
+/* Two tinted variants. Anything that is neither of these stays neutral. */
+.badge-brand {
+    background: var(--brand-tint);
+    border-color: var(--brand-tint-2);
+    color: var(--primary-text);
+}
+.badge-amber {
+    background: var(--amber-tint);
+    border-color: var(--amber);
+    color: var(--warning-text);
+}
+
+.legend {
+    display: flex;
+    align-items: center;
+    gap: var(--s1);
+    font-size: var(--fs-xs);
+    color: var(--text-muted);
+}
+.legend-dot { width: 8px; height: 8px; border-radius: 2px; }
+
+/* ── Readouts ─────────────────────────────────────────────────────────────── */
+
+.stat-box {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--r-sm);
+    padding: var(--s3) var(--s4);
+    text-align: left;
+}
+.stat-value {
+    font-family: var(--font-mono);
+    font-size: var(--fs-xl);
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    color: var(--text-primary);
+}
+.stat-label {
+    font-size: var(--fs-xs);
+    color: var(--text-muted);
+    margin-top: 5px;
+}
+
+/* Set like a journal table: a rule above the head, a rule under it, a rule under
+   the body, and no vertical rules anywhere (booktabs). */
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    border-top: 1.5px solid var(--ink);
+    border-bottom: 1.5px solid var(--ink);
+}
+.data-table th {
+    background: transparent;
+    padding: var(--s2) var(--s3);
+    text-align: left;
+    font-family: var(--font-sans);
+    font-size: var(--fs-xs);
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--ink);
+    white-space: nowrap;
+}
+.data-table td {
+    padding: 8px var(--s3);
+    border-bottom: 1px solid var(--rule);
+    font-size: var(--fs-sm);
+    color: var(--text-secondary);
+}
+.data-table tbody tr:last-child td { border-bottom: none; }
+.data-table tbody tr:hover td { background: var(--bg-secondary); }
+
+/* ── Genome-browser track shell ───────────────────────────────────────────────
+   GEOMETRY IS LOAD-BEARING: the 200 px label column feeds the bp→px mapping used
+   by the heatmap, BigWig and BED renderers, and the e2e suite asserts tick
+   positions against it. Do not change it here or in VisualizationPage.
+
+   Track HEIGHT is not fixed: TADVCITrack grows with the number of stacked tick
+   levels and sets its own height inline. A fixed height here clipped its bottom
+   row by 22 px, so the row only gets a minimum. */
+.track-panel {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    overflow: hidden;
+}
+.track-row { display: flex; border-bottom: 1px solid var(--border); }
+.track-row:last-child { border-bottom: none; }
+.track-label {
+    width: 200px;
+    min-width: 200px;
+    padding: 0 14px;
+    background: var(--bg-secondary);
+    border-right: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--s2);
+    font-size: var(--fs-sm);
+    color: var(--text-secondary);
+}
+.track-content { flex: 1; min-height: 38px; position: relative; background: var(--bg-card); }
+
+.bed-block {
+    position: absolute;
+    height: 65%;
+    top: 17.5%;
+    border-radius: 2px;
+    cursor: pointer;
+    transition: transform var(--dur) var(--ease);
+}
+.bed-block:hover { transform: scaleY(1.2); z-index: 5; }
+.bed-block.di { background: rgba(180, 68, 60, 0.55); }
+.bed-block.sdi { background: rgba(29, 78, 216, 0.55); }
+.bed-block.is { background: rgba(47, 125, 87, 0.55); }
+.bed-block.consensus-block { background: var(--ink); border-radius: 3px; height: 70%; top: 15%; }
+
+.score-tag {
+    position: absolute;
+    top: -5px;
+    right: -3px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--r-xs);
+    padding: 1px 5px;
+    font-family: var(--font-mono);
+    font-size: var(--fs-micro);
+    font-weight: 500;
+    box-shadow: var(--shadow-sm);
+}
+.score-tag.high { color: var(--success-text); border-color: var(--success); }
+.score-tag.mid { color: var(--warning-text); border-color: var(--warning); }
+.score-tag.low { color: var(--danger-text); border-color: var(--danger); }
+
+.prob-bar { width: 60px; height: 4px; background: var(--bg-tertiary); border-radius: 2px; overflow: hidden; }
+.prob-fill { height: 100%; border-radius: 2px; }
+.prob-fill.high { background: var(--success); }
+.prob-fill.mid { background: var(--warning); }
+.prob-fill.low { background: var(--danger); }
+
+/* ── Overlays and misc ────────────────────────────────────────────────────── */
+
+.fade-in { animation: fadeIn 0.18s var(--ease); }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.scrollbar::-webkit-scrollbar { width: 9px; height: 9px; }
+.scrollbar::-webkit-scrollbar-track { background: transparent; }
+.scrollbar::-webkit-scrollbar-thumb {
+    background: var(--rule-strong);
+    border-radius: 99px;
+    border: 2px solid var(--bg-main);
+}
+.scrollbar::-webkit-scrollbar-thumb:hover { background: var(--ink-faint); }
+
+.modal-bg {
+    position: fixed;
+    inset: 0;
+    background: rgba(23, 24, 26, 0.34);
+    backdrop-filter: blur(3px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+}
+.modal {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    box-shadow: var(--shadow-lg);
+    max-width: 90vw;
+}
