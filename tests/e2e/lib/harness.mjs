@@ -240,8 +240,8 @@ export async function launchChromium() {
 export function requirePython() {
   const candidates = [
     process.env.CREDITAD_PYTHON,
-    '$HOME/miniforge3/bin/python3.13',
     'python3',
+    'python',
   ].filter(Boolean)
   for (const py of candidates) {
     const probe = runSync(py, ['-c', 'import tad_vci'], { cwd: BACKEND_DIR })

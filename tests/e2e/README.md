@@ -28,7 +28,7 @@ Prerequisites (each is probed; a missing one skips rather than fails):
   `NODE_PATH`, `frontend/node_modules`, and `~/.npm/_npx/*/node_modules`;
   `CREDITAD_PLAYWRIGHT_DIR` points at a specific `node_modules` directory
 - a Python that can `import tad_vci` from `backend/` — tries
-  `CREDITAD_PYTHON`, then `$HOME/miniforge3/bin/python3.13`, then `python3`
+  `CREDITAD_PYTHON`, then `python3`, then `python`
 
 ## Exit codes
 

@@ -126,6 +126,13 @@ const extraResources = [
 // installer and the properties page.
 module.exports = {
   appId: 'com.noesisthink.creditad',
+  // CrediTAD ships no auto-update server. Left unset, electron-builder tries to infer a
+  // publish provider from .git/config, finds no remote, and then crashes in
+  // computeChannelNames (updateInfoBuilder.ts:47) AFTER the artefact has already been
+  // written -- a build that exits 1 while leaving a complete-looking AppImage on disk.
+  // `publish: null` states the intent explicitly and skips update-info generation, so a
+  // zero exit code means what it says.
+  publish: null,
   asar: true,
   productName: 'CrediTAD',
   executableName: 'CrediTAD',

@@ -1,103 +1,95 @@
-# creditad-desktop — CrediTAD desktop client (Electron + Vue 3)
+# creditad-desktop
 
-Desktop front end for **CrediTAD**, the per-boundary evidence-audit workflow for
-already-called Hi-C TAD boundaries. The scientific engine, the `creditad` CLI and the
-HTTP/JSON API server live in the main repository: <https://github.com/Yin-Shen/creditad>.
-This repository is the client only — it calls that API and renders the result.
+Electron + Vue desktop client for **CrediTAD** — structured per-boundary evidence
+records for post-calling review of TAD boundaries.
 
-**This repository contains source, not installers.** No `node_modules/`, no build output
-and no packaged application is committed here.
+This repository holds the **desktop client source only**. The analysis engine, the
+CLI and the six delivered evidence packages live in the main repository:
+<https://github.com/Yin-Shen/creditad>.
+
+## Pre-built binaries (v1.0.1)
+
+**This repository ships source, not installers — no packaged application is committed
+here.** Built applications for version 1.0.1 are distributed as assets of the
+[v1.0.1 release of the main
+repository](https://github.com/Yin-Shen/creditad/releases/tag/v1.0.1):
+
+| asset | platform | what it is |
+|---|---|---|
+| `CrediTAD-Linux.AppImage` | Linux x86_64 | self-contained AppImage; `chmod +x` and run |
+| `CrediTAD-Windows-Setup.exe` | Windows x64 | NSIS installer, per-user (no admin rights) |
+| `CrediTAD-Windows-1.0.1.zip` | Windows x64 | portable archive of the same application |
+
+Each asset carries a **published SHA-256** in those release notes; verify a download
+against it before running (`sha256sum <file>`). All three are built from this source at
+version 1.0.1, embed the same backend (identical SHA-256 for every shipped `.py`) and
+their own Python runtime, so no separate Python installation is required.
+
+The Linux AppImage was built and started by the authors. The Windows installer was
+cross-built on Linux and confirmed to run on Windows by the authors; no Windows version
+matrix was exercised.
+
+Each build also embeds the three chr7 demo contact maps under
+`resources/example_data/chr7_tracks/` — these are not in either git repository, because
+they exceed the file-size policy.
+
+## What this is, and what it is not
+
+CrediTAD is a downstream evidence-audit workflow. It takes boundaries that some
+caller already produced and attaches to each one a checkable evidence record over
+four named criteria, plus a deterministic evidence tier. It is not a TAD caller, not
+a caller benchmark, not a consensus method, and the tier is neither a probability nor
+a ground-truth label.
+
+## Criteria, and the paper-to-software correspondence
+
+| paper wording | software column | what is measured |
+|---|---|---|
+| caller support | `caller_support` | which callers in the named panel support this position |
+| CTCF evidence | `ctcf_*` | CTCF ChIP signal in the window |
+| RAD21/cohesin evidence | `rad21_*` | RAD21 ChIP signal in the window |
+| **loop-anchor engagement (number of loop ends in the window)** | **`loop_anchor_count`** | count of loop ends falling in the window |
+
+The delivered column name is `loop_anchor_count` and is **not** renamed. The
+manuscript phrase "loop-anchor engagement" refers to exactly this column.
+
+Absence of CTCF, cohesin or loop-anchor signal at a position means no CTCF, cohesin
+or loop-anchor support was measured at this position. It is not evidence that the
+boundary is false: CTCF/cohesin looping does not account for all human TAD
+boundaries.
 
 ## Build
 
+The build embeds a Python backend and an interpreter runtime, which are **not** in
+this repository — they are staged from the main repository's tree.
+
 ```bash
-npm ci            # exact dependency tree from package-lock.json
-npm run build     # vite build + electron-builder
+npm ci
+export CREDITAD_PACKAGE_BACKEND=/path/to/creditad/package_stage_linux/backend
+export CREDITAD_PACKAGE_RUNTIME=/path/to/creditad/package_stage_linux/runtime
+export CREDITAD_PACKAGE_EXAMPLE_DATA=/path/to/creditad/package_stage_linux/example_data
+export CREDITAD_PACKAGE_OS=linux CREDITAD_RELEASE_DIR=release/linux
+npm run build:desktop -- --linux AppImage      # Linux AppImage
+npm run build:win                              # Windows NSIS installer (needs wine on Linux)
 ```
 
-`npm run build` also needs a staged backend, an embedded Python runtime and the example
-data (see `electron-builder.config.cjs` and `scripts/package-preflight.cjs`); the preflight
-step names any input that is missing. To develop against a running backend instead, start
-the API server from the main repository and run `npm run dev`.
+`npm run package:preflight` checks the three staged inputs before any build starts and
+fails with the missing path rather than producing a bundle with nothing to show.
+
+Building the Windows **NSIS installer** on Linux requires `wine`: electron-builder runs
+the freshly built installer once to generate its uninstaller. The unpacked Windows tree
+and the portable zip do not need it.
 
 ## Tests
 
 ```bash
-node --test tests/reviewExport.test.mjs      # 8 tests, no dependencies required
-CREDITAD_BACKEND_DIR=/path/to/creditad/backend node --test tests/reviewExport.test.mjs
-```
-
-Three assertions in that suite are a contract on the **backend** (it must not re-expose the
-retired consensus/tadshop routes). They run when the backend tree is reachable — set
-`CREDITAD_BACKEND_DIR`, or check both repositories out side by side — and are skipped with
-a printed reason when it is not.
-
----
-
-# CrediTAD frontend
-
-Vue 3 + Vite frontend for the local CrediTAD post-calling evidence-card
-prototype. The active interface visualizes Hi-C and boundary tracks, runs the
-five-method caller panel through the backend, displays named BD1–BD4 evidence
-fields and D1–D5 evidence tiers, and records optional local review decisions.
-
-The Home page exposes one canonical built-in genome-wide view, GM12878. User
-imports remain available for compatible Hi-C matrices, boundary BEDs and
-optional signal/loop tracks. The import form requires an explicit genome
-assembly so a user dataset is never assigned an assembly from its cell-line
-label.
-
-The retired BoundaryNet/BCP, conformal routing and active-learning claims are
-not part of the active scientific workflow. The backend does not register the
-legacy `/api/deeptad/*` routes, and the active TAD pipeline rejects BCP
-activation. Do not use historical model metrics or checkpoints as evidence.
-The active renderer has no legacy boundary-prediction/probability overlay.
-
-The Local Reviews page exports only versioned local review assertions. JSON
-and BED export is fail-closed unless the active application context supplies
-assembly, cell, resolution and source, and every record's embedded context
-matches it. Because the backend record schema does not contain the input source,
-the frontend stores a local source binding keyed by each record checksum; a
-missing or mismatched binding blocks export. No hg19 or 25 kb export fallback is
-used.
-
-## Development
-
-From the repository root, start the backend in one terminal:
-
-```bash
-python -m venv .venv
-source .venv/bin/activate
-python -m pip install -e '.[app]'
-python backend/main.py
-```
-
-Then start the frontend in a second terminal:
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-The frontend is served at `http://127.0.0.1:5173`; the backend listens on
-`http://127.0.0.1:5001`.
-
-## Verification
-
-```bash
-node --test tests/reviewExport.test.mjs
+npm run test:unit     # node --test
+npm run test:e2e      # prerequisites are probed; a missing one skips rather than fails
 npm run type-check
-npx vite build
 ```
 
-See the repository [README](../README.md) and [user guide](../USER_GUIDE.md)
-for the current scope, data formats, API surface and audit limitations. Built-in
-cell views are audit-server conveniences and remain fail-closed unless a complete
-manifest-gated ICE-v2 annotation exists. Desktop packaging excludes research
-analysis archives and does not promise those server-local built-ins; users can
-import their own compatible matrices and tracks.
+`tests/e2e` resolves a Python via `CREDITAD_PYTHON`, then `python3`, then `python`.
 
-## License
+## Licence
 
-MIT; see [LICENSE](../LICENSE).
+MIT — see [LICENSE](LICENSE).
