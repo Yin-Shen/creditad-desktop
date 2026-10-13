@@ -51,6 +51,13 @@ const backendFilters = [
 // applying the Windows list to an AppImage would ship a runtime with no dependencies
 // at all, and the failure would only appear when a user launched it.
 const packageOs = process.env.CREDITAD_PACKAGE_OS === 'linux' ? 'linux' : 'win'
+const runtimeIsWin = existsSync(path.join(packageInputs.runtimeDir, 'python.exe'))
+if ((packageOs === 'win') !== runtimeIsWin) {
+  throw new Error(
+    `electron-builder.config: CREDITAD_PACKAGE_OS=${process.env.CREDITAD_PACKAGE_OS || '(unset: win)'} ` +
+      `does not match the ${runtimeIsWin ? 'Windows' : 'Linux'} runtime at ${packageInputs.runtimeDir}`,
+  )
+}
 
 const runtimeFiltersLinux = [
   '**/*',

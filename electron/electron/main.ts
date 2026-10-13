@@ -160,9 +160,14 @@ const getEmbeddedRuntimeDir = (): string =>
     : path.join(process.cwd(), 'runtime')
 
 const getEmbeddedPythonPath = (): string | null => {
-  const exe = process.platform === 'win32' ? 'python.exe' : 'python'
-  const candidate = path.join(getEmbeddedRuntimeDir(), exe)
-  return fs.existsSync(candidate) ? candidate : null
+  const runtimeDir = getEmbeddedRuntimeDir()
+  // A conda environment keeps its interpreter at bin/python on Linux and macOS and at
+  // python.exe in the environment root on Windows.
+  const candidates =
+    process.platform === 'win32'
+      ? [path.join(runtimeDir, 'python.exe')]
+      : [path.join(runtimeDir, 'bin', 'python'), path.join(runtimeDir, 'python')]
+  return candidates.find((candidate) => fs.existsSync(candidate)) ?? null
 }
 
 interface ResolvedBackendLauncher {
@@ -249,7 +254,9 @@ function startPackagedServer(): ServerLaunchResult {
     return {
       success: false,
       message:
-        'Backend launcher not found. Expected either runtime/python.exe + backend/main.py or backend/main.exe.',
+        process.platform === 'win32'
+          ? 'Backend launcher not found. Expected either runtime/python.exe + backend/main.py or backend/main.exe.'
+          : 'Backend launcher not found. Expected either runtime/bin/python (or runtime/python) + backend/main.py or backend/main.',
     }
   }
 
@@ -308,6 +315,11 @@ function startPackagedServer(): ServerLaunchResult {
     launchEnv.PYTHONPATH = [serverDir, ...siteCandidates].join(path.delimiter)
     if (process.platform === 'win32') {
       launchEnv.PATH = `${embeddedRuntime};${path.join(embeddedRuntime, 'Scripts')};${path.join(embeddedRuntime, 'Library', 'bin')};${launchEnv.PATH ?? ''}`
+    } else {
+      // Without this the bundled interpreter also imports from the user's
+      // ~/.local/lib/python3.11/site-packages, so the backend can depend on whatever
+      // the host happens to have installed there.
+      launchEnv.PYTHONNOUSERSITE = '1'
     }
   }
 

@@ -4,7 +4,9 @@
     "Read by electron-builder.config.cjs when it copies the staged backend into resources/backend/.",
     "Semantics: dir_names and file_names match a path component exactly; file_patterns",
     "are minimatch patterns matched against the file name only, at any depth.",
-    "This is the list the v1.0.1 desktop binaries were packaged with; only this comment differs."
+    "1.0.2 adds *.bak_*, *.before_* (dated backups such as mcool_bed.py.bak_20260803 and",
+    "sql.py.before_d04 were shipped in the v1.0.1 backend) and requirements.lock.txt (it pins",
+    "the development interpreter, not the bundled runtime, and named a host path)."
   ],
   "dir_names": [
     "__pycache__",
@@ -33,13 +35,16 @@
     "LEGACY_RECORDS_QUARANTINED.md",
     "requirements-analyses.txt",
     "decision_records_v3.jsonl",
-    "K562_HiCCUPS_loops_hg38.bedpe"
+    "K562_HiCCUPS_loops_hg38.bedpe",
+    "requirements.lock.txt"
   ],
   "file_patterns": [
     "*.pyc",
     "*.pre_*",
+    "*.before_*",
     "*.disabled",
     "*.bak",
+    "*.bak_*",
     "*.orig",
     "test_*.py",
     "plot_*.py",
