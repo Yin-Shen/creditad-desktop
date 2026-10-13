@@ -38,6 +38,29 @@ electron-builder places Electron's own licence (`LICENSE.electron.txt`, MIT) and
 Chromium licences (`LICENSES.chromium.html`) next to the executable of every packaged
 build.
 
+## Python runtime of the Linux AppImage (`resources/runtime`), from 1.0.2
+
+Built by `scripts/build_linux_runtime.sh`; the exact files are pinned in
+`scripts/linux-runtime/`.
+
+- 128 conda-forge packages (`conda-linux-64.lock`): CPython 3.11 (Python-2.0) and the
+  libraries it links, NumPy, SciPy, pandas, h5py, scikit-learn, scikit-image, hmmlearn and
+  OpenBLAS (BSD-3-Clause), aiohttp (MIT and Apache-2.0), SQLAlchemy (MIT), OpenSSL
+  (Apache-2.0), libcurl (curl licence), and others. The licence files the packages carry
+  are copied to `resources/runtime/share/licenses/conda/<name>-<version>/`. Ten packages
+  carry none in their archive: the GCC runtime libraries `libgcc`, `libgcc-ng`,
+  `libgfortran`, `libgfortran5`, `libgomp`, `libstdcxx`, `libstdcxx-ng` (GPL-3.0 with the
+  GCC Runtime Library Exception 3.1), `libfreetype` and `libfreetype6` (FreeType licence
+  or GPL-2.0), and `libsqlite` (public domain, with the SQLite blessing).
+- From PyPI (`pip-requirements.txt`), each with its licence file in its
+  `lib/python3.11/site-packages/<name>-<version>.dist-info/` directory: cooler 0.10.4,
+  click 8.5.0, cytoolz 1.2.0, dill 0.4.1, multiprocess 0.70.19, pyfaidx 0.9.0.4 and
+  toolz 1.2.0 (BSD-3-Clause); pyBigWig 0.3.25, asciitree 0.3.3 and PyYAML 6.0.3 (MIT);
+  simplejson 4.2.0 (MIT or AFL-2.1).
+
+The runtimes of the v1.0.1 builds came from an unpinned conda-forge environment and are
+not described here.
+
 ## Images in `public/`
 
 `CrediTAD.svg`, `CrediTAD.ico` and the `CrediTAD-*.png` files are the project's own

@@ -42,6 +42,30 @@ diff -r dist /tmp/released_app/dist && diff -r dist-electron /tmp/released_app/d
 The rest of each build (`resources/backend`, `resources/runtime`,
 `resources/example_data`) is not built from this repository; see [Packaging](#packaging).
 
+### Client version 1.0.2: Linux AppImage only
+
+Version 1.0.2 of this client changes the Linux AppImage; the two Windows files above
+remain the Windows builds. Relative to v1.0.1:
+
+- The main process finds the interpreter of a Linux runtime at
+  `resources/runtime/bin/python` (and still accepts `resources/runtime/python`), so the
+  AppImage starts its bundled backend. On Windows it still uses
+  `resources/runtime/python.exe`.
+- The Linux runtime is built by `scripts/build_linux_runtime.sh` from two pinned lists
+  in `scripts/linux-runtime/`: the 128 conda-forge builds of the v1.0.1 runtime, and
+  hash-pinned PyPI files for `cooler` 0.10.4, `pyBigWig` 0.3.25 and the rest of
+  `cooler`'s dependencies, which the v1.0.1 runtime lacked.
+- Outside Windows the bundled interpreter runs with `PYTHONNOUSERSITE=1`, so packages in
+  the user's `~/.local` are not imported; review records are written to
+  `<userData>/records` (the AppImage mounts `resources/` read-only, and recording a review
+  failed there); and the exit cleanup stops only the process listening on port 5001
+  instead of every process connected to it.
+- Backup files (`*.bak_*`, `*.before_*`) and the backend's `requirements.lock.txt` are
+  left out of the package, and `package.json` declares `"license": "MIT"`.
+
+These changes alter `package.json` and the main-process bundle, so a 1.0.2 build writes
+an `app.asar` that differs from the v1.0.1 file above.
+
 ## Requirements
 
 Node.js and npm. The commands below were run with Node.js 22.22.2 and npm 10.9.7 on
@@ -105,45 +129,91 @@ passed.
 | input | variable | content |
 |---|---|---|
 | backend | `CREDITAD_PACKAGE_BACKEND` | the main repository's `backend/` with `main.py`; the files and directories in `scripts/package_excludes.json` are left out |
-| runtime | `CREDITAD_PACKAGE_RUNTIME` | a Python environment directory: `python.exe` at its top level for Windows, `bin/python` for Linux |
+| runtime | `CREDITAD_PACKAGE_RUNTIME` | a Python environment directory: `python.exe` at its top level for Windows; for Linux the output of `scripts/build_linux_runtime.sh` (`bin/python`) |
 | example data | `CREDITAD_PACKAGE_EXAMPLE_DATA` | `multicell/<CELL>_<RES>/annotation.tsv` or `.tsv.gz` for GM12878, IMR90 and HepG2 at 25 kb at least, and optionally `chr7_tracks/` |
 
 Without the variables, the inputs are read from `package_stage/{backend,runtime,example_data}`
 in this repository (ignored by git).
 
 ```bash
-# Linux AppImage
-export CREDITAD_PACKAGE_BACKEND=... CREDITAD_PACKAGE_RUNTIME=... CREDITAD_PACKAGE_EXAMPLE_DATA=...
-CREDITAD_PACKAGE_OS=linux CREDITAD_RELEASE_DIR=release/linux npm run build:desktop -- --linux AppImage
-
 # Windows NSIS installer (on Linux this needs wine: electron-builder runs the installer
 # once to generate its uninstaller); build:win:portable and build:win:all also exist
 npm run build:win
 ```
 
-To package this tag exactly as it was released, stage the three directories from a
-released build: they are `resources/backend`, `resources/runtime` and `resources/example_data`
-inside it (an AppImage unpacks with `--appimage-extract`). The three chr7 `.mcool`
-contact maps of the demo exist only there, because they exceed the main repository's
-file-size limit. The Python environment in the released builds was assembled from
-conda-forge with unpinned package versions, so a newly assembled runtime will not be
-byte-identical to it.
+`CREDITAD_PACKAGE_OS` (`linux`, or unset for Windows) chooses which files of the runtime
+are left out, and the two rule sets are not interchangeable; the configuration refuses a
+value that does not match the layout of the staged runtime.
 
-## Known issues in the v1.0.1 builds
+### Linux AppImage
 
-These are properties of the released v1.0.1 application, kept unchanged at tag `v1.0.1`
-so that the source matches the binaries:
+Three steps, each writing into a new directory. The first needs conda 23.10 or later on
+`PATH` and network access to conda-forge and PyPI; the second reads a clone of the main
+repository with `git archive` and changes nothing in it.
 
-- The Linux AppImage does not start its bundled backend. The main process looks for the
-  interpreter at `resources/runtime/python`, but the AppImage ships it at
-  `resources/runtime/bin/python`, so the window opens and reports "Backend launcher not
-  found". The bundled Linux runtime also lacks `cooler` and `pyBigWig`, which the backend
-  imports at startup. With the AppImage, start the backend separately as described
-  above; the client then connects to it on port 5001. The Windows builds ship
-  `resources/runtime/python.exe` together with `cooler` and `winbbi`, so neither defect
-  applies to them.
-- On exit the main process stops its backend and then also terminates any process
-  listening on port 5001 (and, on Windows, any process named `main.exe`).
+```bash
+# 1. Python runtime from the pinned lists in scripts/linux-runtime/
+scripts/build_linux_runtime.sh /path/to/stage/runtime
+
+# 2. backend/ and example_data/ from a tag of the main repository
+scripts/stage_linux_package.sh --repo /path/to/creditad --tag v1.0.4 \
+  --released-resources /path/to/linux-unpacked/resources --out /path/to/stage/v1.0.4
+
+# 3. the AppImage
+export CREDITAD_PACKAGE_RUNTIME=/path/to/stage/runtime \
+       CREDITAD_PACKAGE_BACKEND=/path/to/stage/v1.0.4/backend \
+       CREDITAD_PACKAGE_EXAMPLE_DATA=/path/to/stage/v1.0.4/example_data
+CREDITAD_PACKAGE_OS=linux CREDITAD_RELEASE_DIR=release/linux npm run build:desktop -- --linux AppImage
+```
+
+`build_linux_runtime.sh` builds the environment at `/tmp/creditad-linux-runtime` and then
+copies it, because conda writes the install prefix into scripts and some binaries. It
+writes the versions, licences and hashes of everything it installed to
+`<runtime>.manifest/`, and the licence files of the conda packages to
+`share/licenses/conda/` inside the runtime.
+
+`stage_linux_package.sh` lays the files out as in the v1.0.1 package and writes
+`STAGE_MANIFEST.tsv` (size, SHA-256 and source of every file). `--released-resources` is
+`resources/` of a released Linux build (`linux-unpacked/resources`, or
+`squashfs-root/resources` after `CrediTAD-Linux.AppImage --appimage-extract`); it supplies
+the files the main repository does not hold: the three chr7 `.mcool` contact maps, which
+exceed the main repository's file-size limit, the gap masks and `labels.json` of
+`backend/extra_mode/`, `example_data/README.md` and `multicell/index.json`. The main
+repository ships the caller tracks as `*_boundaries.bed.gz`; the script stages them
+decompressed, because the Home-page demo registers only plain `*_boundaries.bed` files.
+
+To repackage tag `v1.0.1` exactly as it was released, stage the three directories from a
+released v1.0.1 build: they are `resources/backend`, `resources/runtime` and
+`resources/example_data` inside it (an AppImage unpacks with `--appimage-extract`). The
+Windows runtime was assembled from conda-forge with unpinned package versions and is not
+reproducible from this repository.
+
+## Known issues
+
+Fixed in 1.0.2 for Linux: the v1.0.1 AppImage did not start its bundled backend. Its main
+process looked for the interpreter at `resources/runtime/python` while the AppImage ships
+`resources/runtime/bin/python`, so the window opened and reported "Backend launcher not
+found"; and its runtime lacked `cooler` and `pyBigWig`, which the backend imports at
+startup. The Windows builds ship `resources/runtime/python.exe` together with `cooler` and
+`winbbi`, so neither defect applies to them.
+
+Still present:
+
+- In the AppImage, the Import page fails with "output_dir cannot be created: Read-only
+  file system". The page asks the backend to write its results to `./tad_results`, which
+  resolves inside `resources/backend/`, and the AppImage mounts `resources/` read-only.
+  The Home-page demos, the evidence cards and the review records are not affected. As a
+  workaround, unpack the AppImage (`--appimage-extract`) and start
+  `squashfs-root/CrediTAD`; results then land in `squashfs-root/resources/backend/tad_results`.
+  The Windows builds install into a writable per-user directory.
+- The AppImage needs FUSE 2 (`libfuse.so.2`) to mount itself. Without it, start it with
+  `--appimage-extract-and-run`, or unpack it as above.
+- Where unprivileged user namespaces are restricted
+  (`kernel.apparmor_restrict_unprivileged_userns=1`, as on the Ubuntu 26.04 host this
+  was observed on), Electron's sandbox cannot start inside an AppImage and the app
+  aborts unless it is started with `--no-sandbox`.
+- On exit the main process stops its backend and then also terminates whatever process
+  is listening on port 5001 (and, on Windows, any process named `main.exe`).
 - The client is built on Electron 30, which no longer receives security updates.
 
 ## Criteria shown by the client
