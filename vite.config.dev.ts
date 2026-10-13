@@ -1,13 +1,13 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 
-// Dev-only config: NO Electron plugin (runs on a headless Linux server, accessed
-// through an SSH tunnel).  Port is locked to 5173 and strictPort so the
-// address never drifts on reload.
+// Dev-only config: NO Electron plugin, so the renderer can be developed in a browser
+// (also on a headless host reached through an SSH tunnel). Bound to loopback; port is
+// locked to 5173 and strictPort so the address never drifts on reload.
 export default defineConfig({
   plugins: [vue()],
   server: {
-    host: '0.0.0.0',
+    host: '127.0.0.1',
     port: 5173,
     strictPort: true,
     watch: {

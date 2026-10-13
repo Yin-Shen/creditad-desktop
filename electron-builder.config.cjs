@@ -26,9 +26,8 @@ if (!existsSync(path.join(__dirname, iconPng))) {
   throw new Error(`electron-builder.config: linux brand icon missing at ${iconPng}`)
 }
 
-// Exclusion rules live in one file shared with scripts/stage_windows_package.sh and
-// scripts/verify_win_package.py; three hand-maintained copies had already drifted apart.
-const excludes = require('../scripts/package_excludes.json')
+// Exclusion rules for the staged backend live in one file, scripts/package_excludes.json.
+const excludes = require('./scripts/package_excludes.json')
 const backendFilters = [
   '**/*',
   ...excludes.dir_names.map((d) => `!**/${d}/**`),

@@ -13,7 +13,7 @@ CLI/API agreement were previously only ever verified by hand.
 ## Running
 
 ```bash
-# from frontend/
+# from the repository root
 npm run test:unit          # node unit tests, no services needed
 npm run test:e2e           # all three scripts
 npm run test:e2e -- demoPackages     # one script (prefix match)
@@ -25,10 +25,11 @@ Prerequisites (each is probed; a missing one skips rather than fails):
 - backend on `http://127.0.0.1:5001` (`CREDITAD_E2E_BACKEND` to override)
 - vite dev server on `http://127.0.0.1:5173` (`CREDITAD_E2E_FRONTEND` to override)
 - a Playwright install with a downloaded chromium — auto-discovered from
-  `NODE_PATH`, `frontend/node_modules`, and `~/.npm/_npx/*/node_modules`;
+  `NODE_PATH`, this repository's `node_modules`, and `~/.npm/_npx/*/node_modules`;
   `CREDITAD_PLAYWRIGHT_DIR` points at a specific `node_modules` directory
-- a Python that can `import tad_vci` from `backend/` — tries
-  `CREDITAD_PYTHON`, then `python3`, then `python`
+- a Python that can `import tad_vci` from the main repository's `backend/` — set
+  `CREDITAD_BACKEND_DIR` to that directory (default `../backend`); the interpreter
+  tried is `CREDITAD_PYTHON`, then `python3`, then `python`
 
 ## Exit codes
 

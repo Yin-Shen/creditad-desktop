@@ -24,10 +24,13 @@ export const EXIT_SKIP = 2
 
 const require_ = createRequire(import.meta.url)
 
-// tests/e2e/lib/harness.mjs -> frontend/ -> repo root
+// tests/e2e/lib/harness.mjs -> this repository's root. The backend is the `backend/`
+// directory of the main CrediTAD repository: CREDITAD_BACKEND_DIR, else ../backend.
 export const FRONTEND_DIR = path.resolve(fileURLToPath(import.meta.url), '../../../..')
 export const REPO_ROOT = path.resolve(FRONTEND_DIR, '..')
-export const BACKEND_DIR = path.join(REPO_ROOT, 'backend')
+export const BACKEND_DIR = process.env.CREDITAD_BACKEND_DIR
+  ? path.resolve(process.env.CREDITAD_BACKEND_DIR)
+  : path.join(REPO_ROOT, 'backend')
 
 export const BACKEND_BASE =
   process.env.CREDITAD_E2E_BACKEND || `http://127.0.0.1:${process.env.CREDITAD_PORT || 5001}`

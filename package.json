@@ -4,11 +4,9 @@
   "version": "1.0.1",
   "type": "module",
   "scripts": {
-    "dev": "CHOKIDAR_USEPOLLING=1 vite --config vite.config.dev.ts --host 0.0.0.0 --port 5173",
+    "dev": "vite --config vite.config.dev.ts --host 127.0.0.1 --port 5173",
     "type-check": "vue-tsc --noEmit",
     "package:preflight": "node scripts/package-preflight.cjs",
-    "package:stage": "bash ../scripts/stage_windows_package.sh",
-    "package:runtime": "bash ../scripts/build_win_runtime.sh",
     "test": "npm run test:unit",
     "test:unit": "node --test tests/reviewExport.test.mjs",
     "test:e2e": "node tests/e2e/run.mjs",

@@ -3,11 +3,11 @@
  *
  * Packaged layout (electron-builder extraResources):
  *   resources/backend/   → Python app (main.py + tad_vci + …)
- *   resources/runtime/   → embedded win-64 Python (python.exe + Lib/…)
+ *   resources/runtime/   → embedded Python (python.exe + Lib/… on Windows, bin/python on Linux)
  *   resources/example_data/multicell/ → six demo packages (required)
  *
- * Staging is produced by:  bash scripts/stage_windows_package.sh
- * Or set paths explicitly:
+ * Inputs are read from package_stage/{backend,runtime,example_data} inside this
+ * repository, or from explicit paths (see README.md, "Packaging"):
  *   CREDITAD_PACKAGE_BACKEND=/path/to/backend
  *   CREDITAD_PACKAGE_RUNTIME=/path/to/runtime   (must contain python.exe on Windows builds)
  *   CREDITAD_PACKAGE_EXAMPLE_DATA=/path/to/example_data
@@ -45,15 +45,15 @@ function resolvePackageInputs() {
 
   const backendDir = process.env.CREDITAD_PACKAGE_BACKEND
     ? path.resolve(process.env.CREDITAD_PACKAGE_BACKEND)
-    : path.resolve(creditadRoot, 'package_stage', 'backend')
+    : path.resolve(frontendDir, 'package_stage', 'backend')
 
   const runtimeDir = process.env.CREDITAD_PACKAGE_RUNTIME
     ? path.resolve(process.env.CREDITAD_PACKAGE_RUNTIME)
-    : path.resolve(creditadRoot, 'package_stage', 'runtime')
+    : path.resolve(frontendDir, 'package_stage', 'runtime')
 
   const exampleDataDir = process.env.CREDITAD_PACKAGE_EXAMPLE_DATA
     ? path.resolve(process.env.CREDITAD_PACKAGE_EXAMPLE_DATA)
-    : path.resolve(creditadRoot, 'package_stage', 'example_data')
+    : path.resolve(frontendDir, 'package_stage', 'example_data')
 
   // Dev fallback: live tree if stage not prepared (explicit opt-in)
   const allowLive = process.env.CREDITAD_PACKAGE_USE_LIVE === '1'
@@ -83,7 +83,7 @@ function resolvePackageInputs() {
 
   if (!resolvedBackend) {
     errors.push(
-      `Backend stage missing: ${backendDir}\n  Run: bash scripts/stage_windows_package.sh`,
+      `Backend stage missing: ${backendDir}\n  Set CREDITAD_PACKAGE_BACKEND=…`,
     )
   } else {
     const mainPy = path.join(resolvedBackend, 'main.py')
@@ -95,7 +95,7 @@ function resolvePackageInputs() {
   if (!resolvedRuntime) {
     errors.push(
       `Embedded Python runtime missing: ${runtimeDir}\n` +
-        `  Expected python.exe (Windows) produced by scripts/build_win_runtime.sh\n` +
+        `  Expected python.exe (Windows) or bin/python (Linux)\n` +
         `  Or set CREDITAD_PACKAGE_RUNTIME=…`,
     )
   } else {
@@ -136,7 +136,7 @@ function resolvePackageInputs() {
         ...errors.map((e) => ` - ${e}`),
         '',
         'Contract: resources/{backend,runtime,example_data} + /api/health after launch.',
-        'See docs/PACKAGING_WINDOWS.md',
+        'See README.md, section "Packaging".',
       ].join('\n'),
     )
   }

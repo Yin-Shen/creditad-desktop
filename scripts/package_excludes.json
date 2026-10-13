@@ -1,0 +1,50 @@
+{
+  "_comment": [
+    "Files and directories that must never enter the packaged desktop application.",
+    "Read by electron-builder.config.cjs when it copies the staged backend into resources/backend/.",
+    "Semantics: dir_names and file_names match a path component exactly; file_patterns",
+    "are minimatch patterns matched against the file name only, at any depth.",
+    "This is the list the v1.0.1 desktop binaries were packaged with; only this comment differs."
+  ],
+  "dir_names": [
+    "__pycache__",
+    ".venv",
+    "analyses",
+    "tests",
+    "test_api",
+    "tad_results",
+    "figures_fig5",
+    "results_audit_gb_point",
+    "results_dual_model_audit",
+    "builtin_callers_v2_pre_4method_backup_20260513",
+    "demo_data",
+    "creditad.egg-info",
+    "tools",
+    "build",
+    "dist"
+  ],
+  "file_names": [
+    "hg19.fa",
+    "hg19.fa.fai",
+    "tad_tokens.db",
+    "chr7.mcool",
+    "chr17.mcool",
+    "debug.log",
+    "LEGACY_RECORDS_QUARANTINED.md",
+    "requirements-analyses.txt",
+    "decision_records_v3.jsonl",
+    "K562_HiCCUPS_loops_hg38.bedpe"
+  ],
+  "file_patterns": [
+    "*.pyc",
+    "*.pre_*",
+    "*.disabled",
+    "*.bak",
+    "*.orig",
+    "test_*.py",
+    "plot_*.py",
+    "train_*.py",
+    "analyze_*.py",
+    "diagnose_*.py"
+  ]
+}

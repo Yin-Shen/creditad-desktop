@@ -22,7 +22,7 @@ export default defineConfig({
     })] : []),
   ],
   server: isWebOnly ? {
-    host: '0.0.0.0',
+    host: '127.0.0.1',
     port: 5173,
     headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate', 'Pragma': 'no-cache' },
   } : undefined,
