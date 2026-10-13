@@ -67,7 +67,7 @@ These changes alter `package.json` and the main-process bundle, so a 1.0.2 build
 an `app.asar` that differs from the v1.0.1 file above.
 
 The 1.0.2 AppImage is built from tag `v1.0.2` of this repository with the backend of
-release v1.0.5 of the main repository (tag `v1.0.5`, commit `9d7413b`; this backend grades
+release v1.0.5 of the main repository (tag `v1.0.5`, commit `ec9a85e`; this backend grades
 a chromosome that a ChIP track lists without data as `not_assessable`), and is attached to
 that release:
 
