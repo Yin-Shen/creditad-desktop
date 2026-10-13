@@ -66,6 +66,18 @@ remain the Windows builds. Relative to v1.0.1:
 These changes alter `package.json` and the main-process bundle, so a 1.0.2 build writes
 an `app.asar` that differs from the v1.0.1 file above.
 
+The 1.0.2 AppImage is built from tag `v1.0.2` of this repository with the backend of
+release v1.0.5 of the main repository, and is attached to that release:
+
+| file | platform | size (bytes) | SHA-256 |
+|---|---|---|---|
+| `CrediTAD-Linux.AppImage` (client 1.0.2, backend v1.0.5) | Linux x86_64 | 540,753,929 | `81061aef1133d27e758dd86cf23b0fe3b89dfc2cbe6a8bac0312542896bea51e` |
+
+Its `resources/app.asar` is 1,475,995 bytes with SHA-256
+`5bd7697596b0b983521db91d385bcd9bfaaa3d9f5afe0cff2eaefe8e58c02359`; two independent
+builds of this source wrote the same file. The AppImage itself is not byte-reproducible
+(two builds with identical contents differ in their image hash).
+
 ## Requirements
 
 Node.js and npm. The commands below were run with Node.js 22.22.2 and npm 10.9.7 on
@@ -90,8 +102,10 @@ still reports 8 of 8 tests passed.
 
 Start the HTTP/JSON service from a checkout of the main repository, as described in its
 `REPRODUCE.md` ("Running the API server"). The Home-page demo registers the per-caller
-tracks of a package only as plain `*_boundaries.bed` files, and the main repository ships
-them gzipped, so give the service a copy of the packages with those files decompressed:
+tracks of a package only as plain `*_boundaries.bed` files in releases v1.0.4 and earlier
+of the main repository, which ship them gzipped; with those releases give the service a
+copy of the packages with those files decompressed (from v1.0.5 the gzipped files are
+read as shipped and this step is not needed):
 
 ```bash
 # in the main repository
@@ -105,8 +119,8 @@ cd backend
 TAD_DB_PATH="sqlite:///$HOME/.creditad/tad_tokens.db" CREDITAD_PORT=5001 python main.py
 ```
 
-Without the decompressed copy the demo loads with no caller tracks and the client
-reports "No caller BED tracks registered".
+With v1.0.4 or earlier and without the decompressed copy, the demo loads with no caller
+tracks and the client reports "No caller BED tracks registered".
 
 Then, in this repository:
 
@@ -116,8 +130,9 @@ npm run dev             # browser build of the client at http://127.0.0.1:5173
 
 `npm run test:e2e` drives that page with Playwright against the running service; see
 [tests/e2e/README.md](tests/e2e/README.md) for its prerequisites. A missing prerequisite
-makes a script exit 2 (skipped), never 0. Run this way against release v1.0.4 of the main
-repository, with `CREDITAD_BACKEND_DIR` pointing at its `backend/`, all three scripts
+makes a script exit 2 (skipped), never 0. Run against the backend of release v1.0.5 of the
+main repository as bundled in the 1.0.2 AppImage (mounted read-only, as the AppImage runtime
+mounts it), with `CREDITAD_BACKEND_DIR` pointing at that `backend/`, all three scripts
 passed.
 
 ## Packaging
@@ -156,13 +171,13 @@ repository with `git archive` and changes nothing in it.
 scripts/build_linux_runtime.sh /path/to/stage/runtime
 
 # 2. backend/ and example_data/ from a tag of the main repository
-scripts/stage_linux_package.sh --repo /path/to/creditad --tag v1.0.4 \
-  --released-resources /path/to/linux-unpacked/resources --out /path/to/stage/v1.0.4
+scripts/stage_linux_package.sh --repo /path/to/creditad --tag v1.0.5 \
+  --released-resources /path/to/linux-unpacked/resources --out /path/to/stage/v1.0.5
 
 # 3. the AppImage
 export CREDITAD_PACKAGE_RUNTIME=/path/to/stage/runtime \
-       CREDITAD_PACKAGE_BACKEND=/path/to/stage/v1.0.4/backend \
-       CREDITAD_PACKAGE_EXAMPLE_DATA=/path/to/stage/v1.0.4/example_data
+       CREDITAD_PACKAGE_BACKEND=/path/to/stage/v1.0.5/backend \
+       CREDITAD_PACKAGE_EXAMPLE_DATA=/path/to/stage/v1.0.5/example_data
 CREDITAD_PACKAGE_OS=linux CREDITAD_RELEASE_DIR=release/linux npm run build:desktop -- --linux AppImage
 ```
 
@@ -197,17 +212,21 @@ found"; and its runtime lacked `cooler` and `pyBigWig`, which the backend import
 startup. The Windows builds ship `resources/runtime/python.exe` together with `cooler` and
 `winbbi`, so neither defect applies to them.
 
+Fixed by the v1.0.5 backend bundled in the 1.0.2 AppImage: the Import page failed with
+"output_dir cannot be created: Read-only file system", because it asks the backend to
+write its results to `./tad_results`, which resolves inside the read-only
+`resources/backend/`. A relative results directory now goes under the per-user data
+directory (`$XDG_DATA_HOME/CrediTAD`, by default `~/.local/share/CrediTAD`) when the
+backend directory is not writable.
+
 Still present:
 
-- In the AppImage, the Import page fails with "output_dir cannot be created: Read-only
-  file system". The page asks the backend to write its results to `./tad_results`, which
-  resolves inside `resources/backend/`, and the AppImage mounts `resources/` read-only.
-  The Home-page demos, the evidence cards and the review records are not affected. As a
-  workaround, unpack the AppImage (`--appimage-extract`) and start
-  `squashfs-root/CrediTAD`; results then land in `squashfs-root/resources/backend/tad_results`.
-  The Windows builds install into a writable per-user directory.
+- The Windows builds are client 1.0.1 and embed the backend of release v1.0.1 of the main
+  repository, which reads a gzip-compressed loop file as empty without reporting it, so
+  every boundary is graded BD4 `none`. Decompress loop files before loading them there.
 - The AppImage needs FUSE 2 (`libfuse.so.2`) to mount itself. Without it, start it with
-  `--appimage-extract-and-run`, or unpack it as above.
+  `--appimage-extract-and-run`, or unpack it with `--appimage-extract` and start
+  `squashfs-root/CrediTAD`.
 - Where unprivileged user namespaces are restricted
   (`kernel.apparmor_restrict_unprivileged_userns=1`, as on the Ubuntu 26.04 host this
   was observed on), Electron's sandbox cannot start inside an AppImage and the app
