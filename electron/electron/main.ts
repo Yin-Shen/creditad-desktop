@@ -236,7 +236,9 @@ function stopPackagedServer(): void {
           'taskkill /F /T /IM python.exe /FI "WINDOWTITLE eq CrediTAD-backend" >nul 2>nul',
           'for /f "tokens=5" %a in (\'netstat -ano ^| findstr ":5001 " ^| findstr LISTENING\') do taskkill /F /PID %a >nul 2>nul',
         ]
-      : ['lsof -ti:5001 | xargs kill -9 >/dev/null 2>&1']
+      : // Listening sockets only, as on Windows: `lsof -ti:5001` also lists every process
+        // with a client connection to the port (a browser, a dev-server proxy) and killed it.
+        ['lsof -ti tcp:5001 -sTCP:LISTEN | xargs kill -9 >/dev/null 2>&1']
 
   for (const cmd of killCommands) {
     exec(cmd, () => undefined)
@@ -291,6 +293,11 @@ function startPackagedServer(): ServerLaunchResult {
     // when backend lives at resources/backend — keep example_data there.
     if (!launchEnv.CREDITAD_SHARED_RAW) {
       launchEnv.CREDITAD_SHARED_RAW = sharedRaw
+    }
+    // The AppImage mounts resources/ read-only, and the review log otherwise lives in
+    // resources/backend/tad_vci/, so recording a review failed with HTTP 500.
+    if (process.platform !== 'win32' && !launchEnv.CREDITAD_RECORDS_DIR) {
+      launchEnv.CREDITAD_RECORDS_DIR = path.join(app.getPath('userData'), 'records')
     }
     // Ensure empty shared-raw dir exists so users know where to put 4DN files
     try {
