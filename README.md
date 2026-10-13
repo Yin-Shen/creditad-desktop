@@ -67,11 +67,13 @@ These changes alter `package.json` and the main-process bundle, so a 1.0.2 build
 an `app.asar` that differs from the v1.0.1 file above.
 
 The 1.0.2 AppImage is built from tag `v1.0.2` of this repository with the backend of
-release v1.0.5 of the main repository, and is attached to that release:
+release v1.0.5 of the main repository (tag `v1.0.5`, commit `9d7413b`; this backend grades
+a chromosome that a ChIP track lists without data as `not_assessable`), and is attached to
+that release:
 
 | file | platform | size (bytes) | SHA-256 |
 |---|---|---|---|
-| `CrediTAD-Linux.AppImage` (client 1.0.2, backend v1.0.5) | Linux x86_64 | 540,753,929 | `81061aef1133d27e758dd86cf23b0fe3b89dfc2cbe6a8bac0312542896bea51e` |
+| `CrediTAD-Linux.AppImage` (client 1.0.2, backend v1.0.5) | Linux x86_64 | 540,753,908 | `63d2cfbd637ab1e1083b7a2d313aac23697fe451ed3f347836e69a715c938ba3` |
 
 Its `resources/app.asar` is 1,475,995 bytes with SHA-256
 `5bd7697596b0b983521db91d385bcd9bfaaa3d9f5afe0cff2eaefe8e58c02359`; two independent
