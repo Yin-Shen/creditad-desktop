@@ -67,13 +67,15 @@ These changes alter `package.json` and the main-process bundle, so a 1.0.2 build
 an `app.asar` that differs from the v1.0.1 file above.
 
 The 1.0.2 AppImage is built from tag `v1.0.2` of this repository with the backend of
-release v1.0.5 of the main repository (tag `v1.0.5`, commit `ec9a85e`; this backend grades
-a chromosome that a ChIP track lists without data as `not_assessable`), and is attached to
-that release:
+release v1.0.5 of the main repository (tag `v1.0.5`, commit `ff3a83f`; this backend grades
+a chromosome that a ChIP track lists without data as `not_assessable`, and its annotate route
+accepts `mask_bed`, the `--mask` option of the CLI, which records BD2/BD3 as `not_assessable`
+inside gap and exclusion-list regions; the bundled hg38 mask ships in the package), and is
+attached to that release:
 
 | file | platform | size (bytes) | SHA-256 |
 |---|---|---|---|
-| `CrediTAD-Linux.AppImage` (client 1.0.2, backend v1.0.5) | Linux x86_64 | 540,753,908 | `63d2cfbd637ab1e1083b7a2d313aac23697fe451ed3f347836e69a715c938ba3` |
+| `CrediTAD-Linux.AppImage` (client 1.0.2, backend v1.0.5) | Linux x86_64 | 540,774,435 | `d31536baeef4fde2109e4cea75dde4283e8f5f3086d21da5a08512f69e90e408` |
 
 Its `resources/app.asar` is 1,475,995 bytes with SHA-256
 `5bd7697596b0b983521db91d385bcd9bfaaa3d9f5afe0cff2eaefe8e58c02359`; two independent
